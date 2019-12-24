@@ -70,8 +70,11 @@ class VisionViewController: ViewController {
 		
 		// Check if we have any temporally stable numbers.
 		if let sureNumber = numberTracker.getStableString() {
-			showString(string: sureNumber)
-			numberTracker.reset(string: sureNumber)
+//			showString(string: sureNumber)
+            numberTracker.reset(string: sureNumber)
+            
+            setupTableViewWithID(sureNumber, sender: self)
+			
 		}
 	}
 	
@@ -132,4 +135,32 @@ class VisionViewController: ViewController {
 			}
 		}
 	}
+}
+
+func setupTableViewWithID(_ sureNumber: String, sender: ViewController) {
+    
+                
+                let key = sureNumber + "-1"
+                
+    //            let result = "\(database[key]!["name"]!): \(database[key]!["num_parts"]!)"
+                
+                if let _ = database[key] {
+                    lastQueriedKey = key
+                }
+                
+                DispatchQueue.main.async {
+                    
+                    
+                    if let tabBarController = sender.parent?.parent as? UITabBarController {
+                        if let navigationController = tabBarController.customizableViewControllers![1] as? UINavigationController {
+                            if let tableViewController = navigationController.viewControllers[0] as? SetInfoTableViewController {
+                                tableViewController.priceEntered = false
+                                tableViewController.tableView.reloadData()
+                                tableViewController.navigationItem.title = "Information for Set #\(sureNumber)"
+                }
+            }
+                        
+            tabBarController.selectedIndex = 1
+        }
+    }
 }

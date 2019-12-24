@@ -68,15 +68,7 @@ extension String {
 		// Note that this doesn't only look for digits since some digits look
 		// very similar to letters. This is handled later.
 		let pattern = #"""
-		(?x)					# Verbose regex, allows comments
-		(?:\+1-?)?				# Potential international prefix, may have -
-		[(]?					# Potential opening (
-		\b(\w{3})				# Capture xxx
-		[)]?					# Potential closing )
-		[\ -./]?				# Potential separator
-		(\w{3})					# Capture xxx
-		[\ -./]?				# Potential separator
-		(\w{4})\b				# Capture xxxx
+		\d{5,8}
 		"""#
 		
 		guard let range = self.range(of: pattern, options: .regularExpression, range: nil, locale: nil) else {
@@ -88,25 +80,29 @@ extension String {
 		// prefix.
 		var phoneNumberDigits = ""
 		let substring = String(self[range])
-		let nsrange = NSRange(substring.startIndex..., in: substring)
-		do {
-			// Extract the characters from the substring.
-			let regex = try NSRegularExpression(pattern: pattern, options: [])
-			if let match = regex.firstMatch(in: substring, options: [], range: nsrange) {
-				for rangeInd in 1 ..< match.numberOfRanges {
-					let range = match.range(at: rangeInd)
-					let matchString = (substring as NSString).substring(with: range)
-					phoneNumberDigits += matchString as String
-				}
-			}
-		} catch {
-			print("Error \(error) when creating pattern")
-		}
-		
+//		let nsrange = NSRange(substring.startIndex..., in: substring)
+//		do {
+//			// Extract the characters from the substring.
+//			let regex = try NSRegularExpression(pattern: pattern, options: [])
+//			if let match = regex.firstMatch(in: substring, options: [], range: nsrange) {
+//				for rangeInd in 1 ..< match.numberOfRanges {
+//					let range = match.range(at: rangeInd)
+//					let matchString = (substring as NSString).substring(with: range)
+//					phoneNumberDigits += matchString as String
+//				}
+//			}
+//		} catch {
+//			print("Error \(error) when creating pattern")
+//		}
+        
+        if let _ = Int(substring) {
+            phoneNumberDigits = substring
+        }
 		// Must be exactly 10 digits.
-		guard phoneNumberDigits.count == 10 else {
-			return nil
-		}
+        //MARK: Digit Limit
+//		guard phoneNumberDigits.count == 5 else {
+//			return nil
+//		}
 		
 		// Substitute commonly misrecognized characters, for example: 'S' -> '5' or 'l' -> '1'
 		var result = ""

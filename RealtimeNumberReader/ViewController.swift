@@ -8,12 +8,13 @@ Main view controller: handles camera, preview and cutout UI.
 import UIKit
 import AVFoundation
 import Vision
+import ProgressHUD
 
 class ViewController: UIViewController {
 	// MARK: - UI objects
 	@IBOutlet weak var previewView: PreviewView!
 	@IBOutlet weak var cutoutView: UIView!
-	@IBOutlet weak var numberView: UILabel!
+	
 	var maskLayer = CAShapeLayer()
 	// Device orientation. Updated whenever the orientation changes to a
 	// different supported orientation.
@@ -72,6 +73,13 @@ class ViewController: UIViewController {
                 self.calculateRegionOfInterest()
             }
         }
+        
+        //Get database loaded before user needs to do anything
+        var data = readDataFromCSV(fileName: "sets", fileType: "csv")
+        data = cleanRows(file: data!)
+        database = csv(data: data!)
+        
+        navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "pencil.and.ellipsis.rectangle"), style: .plain, target: self, action: #selector(enterID))
 	}
 	
 	override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
@@ -143,10 +151,7 @@ class ViewController: UIViewController {
 		path.append(UIBezierPath(rect: cutout))
 		maskLayer.path = path.cgPath
 		
-		// Move the number view down to under cutout.
-		var numFrame = cutout
-		numFrame.origin.y += numFrame.size.height
-		numberView.frame = numFrame
+		
 	}
 	
 	func setupOrientationAndTransform() {
@@ -236,31 +241,32 @@ class ViewController: UIViewController {
 		captureSession.startRunning()
 	}
 	
-	// MARK: - UI drawing and interaction
 	
-	func showString(string: String) {
-		// Found a definite number.
-		// Stop the camera synchronously to ensure that no further buffers are
-		// received. Then update the number view asynchronously.
-		captureSessionQueue.sync {
-			self.captureSession.stopRunning()
-            DispatchQueue.main.async {
-                self.numberView.text = string
-                self.numberView.isHidden = false
-            }
-		}
-	}
 	
 	@IBAction func handleTap(_ sender: UITapGestureRecognizer) {
-        captureSessionQueue.async {
-            if !self.captureSession.isRunning {
-                self.captureSession.startRunning()
+        
+	}
+    
+    @objc func enterID() {
+        let ac = UIAlertController(title: "Enter LEGO Set ID", message: "This number is found right above the set's name and under the age recommendation.", preferredStyle: .alert)
+        ac.addTextField { (textField) in
+            textField.keyboardType = .numberPad
+        }
+        
+        let enter = UIAlertAction(title: "Enter", style: .default) { (action) in
+            if let id = ac.textFields![0].text {
+                setupTableViewWithID(id, sender: self)
             }
-            DispatchQueue.main.async {
-                self.numberView.isHidden = true
+            else {
+                ProgressHUD.showError("Not a valid ID!")
             }
         }
-	}
+        
+        ac.addAction(enter)
+        
+        present(ac, animated: true)
+    }
+    
 }
 
 // MARK: - AVCaptureVideoDataOutputSampleBufferDelegate
